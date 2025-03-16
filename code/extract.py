@@ -3,6 +3,7 @@ import json
 import pandas as pd
 from dotenv import load_dotenv
 import os
+from utils import save_data_to_json, save_dataframe_to_csv, save_campaigns_historical_data
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -78,10 +79,21 @@ if __name__ == '__main__':
     fb_api = os.getenv('AD_ACC_TOKEN')
     ad_acc = os.getenv('AD_ACC_ID')
    
-    fb_api = GraphAPI(fb_api)
+    self = GraphAPI(fb_api)
 
-    fb_api.get_insights(ad_acc)
-    fb_api.get_campaigns_status(ad_acc)
-    fb_api.get_adset_status(ad_acc)
-    fb_api.get_data_over_time(120216392245960133)
+    # Salvar o report de insights em json
+    insights = self.get_insights(ad_acc)
+    save_data_to_json(insights, 'insights')
 
+    # Salvar o report de campaign status em json
+    campaign_status = self.get_campaigns_status(ad_acc)
+    save_data_to_json(campaign_status, 'campaign_status')
+
+    # Salvar o report de adset status em json
+    adset_status = self.get_adset_status(ad_acc)
+    save_data_to_json(adset_status, 'adset_status')
+
+    # Extrair todos os IDs das campanhas ATIVAS e salvar em csv
+    campaign_ids = [campaign['id'] for campaign in campaign_status['data'] if campaign['status'] == 'ACTIVE']
+    df_campaigns = save_campaigns_historical_data(self, campaign_ids)
+    save_dataframe_to_csv(df_campaigns, 'campaigns_historical_data')
